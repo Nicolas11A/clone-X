@@ -45,7 +45,7 @@ const ViewOtherProfile = ({ route, navigation }) => {
         }
 
         setIsFollowing(false);
-        Alert.alert('Has dejado de seguir a', `@${user.username}`);
+        Alert.alert('you have followed', `@${user.username}`);
       } else {
         // seguir usuario
         await addDoc(collection(db, 'followers'), {
