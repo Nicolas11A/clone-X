@@ -24,7 +24,7 @@ export const styles = StyleSheet.create({
         fontWeight: 'bold',
     },
     buttonSignUp: {
-        width: 200,
+        width: 250,
         height: 50,
         marginTop: 10,
     },

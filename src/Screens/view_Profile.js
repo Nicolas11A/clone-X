@@ -4,7 +4,7 @@ import { Card, Avatar, Text, Button, Divider } from 'react-native-paper';
 import styles from '../Styles/styles_viewProfile';
 import { getProfileByUsername } from '../Config/firebaseServices';
 
-const ViewProfile = ({ route, navigation }) => {
+const view_Profile = ({ route, navigation }) => {
   const { profile } = route.params;
   const [userData, setUserData] = useState(profile);
 
@@ -87,4 +87,4 @@ const ViewProfile = ({ route, navigation }) => {
   );
 };
 
-export default ViewProfile;
+export default view_Profile;

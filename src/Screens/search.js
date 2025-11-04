@@ -52,7 +52,7 @@ const search = ({ navigation }) => {
 
   const handleUserPress = (user) => {
     //ver el perfil del usuario seleccionado
-    navigation.navigate('view_Otherprofile', { user });
+    navigation.navigate('ViewOtherProfile', { user });
     Alert.alert('User Selected', `You selected ${user.name} (@${user.username})`);
   };
 

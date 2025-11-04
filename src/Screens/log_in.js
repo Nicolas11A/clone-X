@@ -42,7 +42,7 @@ const log_in = ({ navigation }) => {
 
         if (fetchedProfile.password === profileUser.password) {
           //navegar al menu principal
-          navigation.navigate('search', { profile: fetchedProfile });
+          navigation.navigate('home', { profile: fetchedProfile });
         } else {
           Alert.alert('Error', 'El correo o contraseña son incorrectos', [{ text: 'OK' }]);
         }

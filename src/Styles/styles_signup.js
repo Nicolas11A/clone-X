@@ -49,6 +49,7 @@ export const styles = StyleSheet.create({
         textAlign: 'left',
         fontWeight: 'bold',
     },
+    
         
 });
 export default styles;

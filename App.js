@@ -5,7 +5,10 @@ import {PaperProvider} from 'react-native-paper';
 import sign_up from './src/Screens/sign_up';
 import log_in from './src/Screens/log_in';
 import search from './src/Screens/search';
-import ViewProfile from './src/Screens/view_Profile';
+import view_Profile from './src/Screens/view_Profile';
+import home from './src/Screens/home';
+import tweets from './src/Screens/tweets';
+import ViewOtherProfile from './src/Screens/ViewOtherProfile';
 
 const Stack = createNativeStackNavigator();
 
@@ -25,13 +28,28 @@ export default function App() {
             options={{ title: 'Crear Perfil' }}
           />
           <Stack.Screen
+            name="home"
+            component={home}
+            options={{ title: 'Inicio' }}
+          />
+          <Stack.Screen
+            name="tweets"
+            component={tweets}
+            options={{ title: 'Tweets' }}
+          />
+          <Stack.Screen
             name="search"
             component={search}
             options={{ title: 'Buscar Usuarios' }}
           />
           <Stack.Screen
+            name="ViewOtherProfile"
+            component={ViewOtherProfile}
+            options={{ title: 'Perfil de Otro Usuario' }}
+          />
+          <Stack.Screen
             name="view_Profile"
-            component={ViewProfile}
+            component={view_Profile}
             options={{ title: 'Perfil de Usuario' }}
           />
         </Stack.Navigator>
