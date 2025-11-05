@@ -19,7 +19,7 @@ const COLLECTION_NAME = 'profiles';
 const COLLECTION_NAME2 = 'followers';
 const COLLECTION_NAME3 = 'follows';
 const COLLECTION_NAME4 = 'tweets';
-const COLLECTION_NAME5 = 'tweet_likes';
+const COLLECTION_NAME5 = 'tweets_likes';
 
 
 export const createProfile = async (profileData) => {
@@ -275,6 +275,29 @@ export const unfollowUser = async (followerUsername, followingUsername) => {
     console.log(`${followerUsername} dejó de seguir a ${followingUsername}`);
   } catch (error) {
     console.error('Error al dejar de seguir usuario:', error);
+    throw error;
+  }
+};
+export const getFollowersList = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME2), where('followingUsername', '==', username));
+    const snapshot = await getDocs(q);
+    const followers = snapshot.docs.map(doc => doc.data().followerUsername);
+    return followers;
+  } catch (error) {
+    console.error('Error obteniendo lista de seguidores:', error);
+    throw error;
+  }
+};
+
+export const getFollowingList = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME3), where('followerUsername', '==', username));
+    const snapshot = await getDocs(q);
+    const following = snapshot.docs.map(doc => doc.data().followingUsername);
+    return following;
+  } catch (error) {
+    console.error('Error obteniendo lista de seguidos:', error);
     throw error;
   }
 };

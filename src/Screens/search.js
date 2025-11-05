@@ -13,14 +13,13 @@ import { db } from '../Config/firebase';
 import styles from '../Styles/styles_search'; 
 
 const Search = ({ navigation, route }) => {
-  // usuario actual conectado (pasado desde Home)
   const { profile } = route.params;
 
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Buscar usuarios mientras se escribe
+  // search users when searchTerm changes
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setResults([]);
@@ -32,7 +31,7 @@ const Search = ({ navigation, route }) => {
       try {
         const usersRef = collection(db, 'profiles');
 
-        // Buscar por username o por nombre
+        // Search by username or name
         const q1 = query(usersRef, where('username', '>=', searchTerm), where('username', '<=', searchTerm + '\uf8ff'));
         const q2 = query(usersRef, where('name', '>=', searchTerm), where('name', '<=', searchTerm + '\uf8ff'));
 
@@ -43,7 +42,7 @@ const Search = ({ navigation, route }) => {
           ...doc.data(),
         }));
 
-        // Eliminar duplicados
+        // Remove duplicates
         const uniqueUsers = users.filter(
           (user, index, self) => index === self.findIndex(u => u.username === user.username)
         );
@@ -56,17 +55,17 @@ const Search = ({ navigation, route }) => {
       }
     };
 
-    const delaySearch = setTimeout(fetchUsers, 400); // pequeño delay
+    const delaySearch = setTimeout(fetchUsers, 400);
     return () => clearTimeout(delaySearch);
   }, [searchTerm]);
 
-  // Cuando se selecciona un usuario de la lista
+  // when user presses on a user card
   const handleUserPress = (user) => {
     if (user.username === profile.username) {
-      // Si es el mismo usuario logueado → ver su propio perfil
+      // If it's the logged-in user → view their own profile
       navigation.navigate('view_Profile', { profile });
     } else {
-      // Si es otro usuario → ver el perfil ajeno
+      // If it's another user → view their profile
       navigation.navigate('ViewOtherProfile', { profile: user, currentUser: profile });
     }
   };

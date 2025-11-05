@@ -51,7 +51,7 @@ const sign_up = ({ navigation }) => {
           text: 'OK',
           onPress: () => {
             navigation.navigate('log_in', { profile: profileUser });
-            navigation.navigate('main_menu', { profile: profileUser });
+            navigation.navigate('home', { profile: profileUser });
           },
         },
       ]);

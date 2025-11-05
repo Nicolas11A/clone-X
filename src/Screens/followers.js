@@ -1,0 +1,202 @@
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
+import { Card, Button } from 'react-native-paper';
+import styles from '../Styles/styles_search';
+import {
+  getFollowersList,
+  getProfileByUsername,
+  isFollowing,
+  followUser,
+  unfollowUser,
+} from '../Config/firebaseServices';
+
+const Followers = ({ navigation, route }) => {
+  const { profile, currentUser } = route.params; 
+  const [followers, setFollowers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [followingStatus, setFollowingStatus] = useState({});
+
+  // load followers list
+  useEffect(() => {
+    const fetchFollowers = async () => {
+      setLoading(true);
+      try {
+        const followerUsernames = await getFollowersList(profile.username);
+
+        // get full profiles of followers
+        const profilesPromises = followerUsernames.map(username =>
+          getProfileByUsername(username)
+        );
+        const profiles = await Promise.all(profilesPromises);
+
+        // Sort alphabetically by full name
+        const sortedProfiles = profiles
+          .filter(Boolean)
+          .sort((a, b) =>
+            (a.name + ' ' + a.lastName).localeCompare(b.name + ' ' + b.lastName)
+          );
+
+        setFollowers(sortedProfiles);
+
+        // Check if the current user follows each one
+        const statusPromises = sortedProfiles.map(p =>
+          isFollowing(currentUser.username, p.username)
+        );
+        const statuses = await Promise.all(statusPromises);
+        const statusMap = {};
+        sortedProfiles.forEach((p, i) => {
+          statusMap[p.username] = statuses[i];
+        });
+        setFollowingStatus(statusMap);
+      } catch (error) {
+        console.error('Error loading followers:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchFollowers();
+  }, []);
+
+  // Follow/Unfollow
+  const handleFollowToggle = async username => {
+    try {
+      const alreadyFollowing = followingStatus[username];
+      if (alreadyFollowing) {
+        await unfollowUser(currentUser.username, username);
+      } else {
+        await followUser(currentUser.username, username);
+      }
+      setFollowingStatus(prev => ({
+        ...prev,
+        [username]: !alreadyFollowing,
+      }));
+    } catch (error) {
+      console.error('Error changing follow state:', error);
+    }
+  };
+
+  // Pagination
+  const ITEMS_PER_PAGE = 10;
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedFollowers = followers.slice(startIndex, endIndex);
+
+  const nextPage = () => {
+    if (endIndex < followers.length) setPage(page + 1);
+  };
+  const prevPage = () => {
+    if (page > 1) setPage(page - 1);
+  };
+
+  // Go to another user's profile
+  const handleOpenProfile = user => {
+    navigation.navigate('ViewOtherProfile', {
+      profile: user, // profile of the tapped user
+      currentUser,   // logged-in user
+    });
+  };
+
+  const renderFollower = ({ item }) => (
+    <TouchableOpacity onPress={() => handleOpenProfile(item)}>
+      <Card style={styles.cardUser}>
+        <View
+          style={{
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+          }}
+        >
+          <View>
+            <Text style={styles.userName}>
+              {item.name} {item.lastName}
+            </Text>
+            <Text style={styles.userUsername}>@{item.username}</Text>
+          </View>
+          {item.username !== currentUser.username && (
+            <Button
+              mode={followingStatus[item.username] ? 'contained-tonal' : 'contained'}
+              onPress={() => handleFollowToggle(item.username)}
+              style={{
+                backgroundColor: followingStatus[item.username] ? '#ccc' : '#4CAF50',
+                borderRadius: 8,
+              }}
+              labelStyle={{ color: '#fff', fontWeight: 'bold' }}
+            >
+              {followingStatus[item.username] ? 'Unfollow' : 'Follow'}
+            </Button>
+          )}
+        </View>
+      </Card>
+    </TouchableOpacity>
+  );
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>Followers</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 20 }} />
+      ) : followers.length === 0 ? (
+        <Text style={styles.noResults}>No followers yet.</Text>
+      ) : (
+        <>
+          <FlatList
+            data={paginatedFollowers}
+            keyExtractor={(item, index) => index.toString()}
+            renderItem={renderFollower}
+          />
+
+          {/* Pagination controls */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 15,
+            }}
+          >
+            <TouchableOpacity
+              disabled={page === 1}
+              onPress={prevPage}
+              style={{
+                backgroundColor: page === 1 ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+                Previous
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              disabled={endIndex >= followers.length}
+              onPress={nextPage}
+              style={{
+                backgroundColor:
+                  endIndex >= followers.length ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>
+                Next
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
+    </View>
+  );
+};
+
+export default Followers;

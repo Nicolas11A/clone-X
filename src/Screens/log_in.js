@@ -84,7 +84,7 @@ const log_in = ({ navigation }) => {
               right={
                 <TextInput.Icon
                   icon={hidePassword ? 'eye-off' : 'eye'}
-                  onPress={() => setHidePassword(!hidePassword)} //  toggle visibility
+                  onPress={() => setHidePassword(!hidePassword)} 
                 />
               }
               textColor={'black'}

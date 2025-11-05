@@ -28,14 +28,18 @@ const ViewProfile = ({ navigation, route }) => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [likedTweets, setLikedTweets] = useState({});
+  const [page, setPage] = useState(1);
 
-  const handleFollowers = () => navigation.navigate('followers', { profile });
-  const handleFollows = () => navigation.navigate('follows', { profile });
+  const ITEMS_PER_PAGE = 10;
+
+  const handleFollowers = () =>
+    navigation.navigate('followers', { profile, currentUser: profile });
+  const handleFollows = () =>
+    navigation.navigate('follows', { profile, currentUser: profile });
   const handleSearch = () => navigation.navigate('search', { profile });
   const handleLogin = () => navigation.navigate('log_in');
   const handleBackHome = () => navigation.navigate('home', { profile });
 
-  // Load the user's tweets and likes.
   useEffect(() => {
     const loadProfileData = async () => {
       setLoading(true);
@@ -50,7 +54,6 @@ const ViewProfile = ({ navigation, route }) => {
         setFollowersCount(followers);
         setFollowingCount(following);
 
-        // Get likes from the logged-in user
         const likedIds = await getUserLikedTweets(profile.username);
         const likedMap = likedIds.reduce((acc, id) => {
           acc[id] = true;
@@ -67,23 +70,19 @@ const ViewProfile = ({ navigation, route }) => {
     loadProfileData();
   }, []);
 
-
   const handleLike = async tweetId => {
     try {
       const alreadyLiked = likedTweets[tweetId];
       const incrementValue = alreadyLiked ? -1 : 1;
 
-      // update likes count
       await updateTweetLikes(tweetId, incrementValue);
 
-      // Register or remove like
       if (alreadyLiked) {
         await removeUserLike(tweetId, profile.username);
       } else {
         await addUserLike(tweetId, profile.username);
       }
 
-      // update local state
       setLikedTweets(prev => ({
         ...prev,
         [tweetId]: !alreadyLiked,
@@ -101,7 +100,6 @@ const ViewProfile = ({ navigation, route }) => {
     }
   };
 
-  // date format
   const formatDate = timestamp => {
     if (!timestamp) return '';
     const date = timestamp.toDate();
@@ -114,7 +112,18 @@ const ViewProfile = ({ navigation, route }) => {
     });
   };
 
-  // Render tweet
+  // pagination
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTweets = tweets.slice(startIndex, endIndex);
+
+  const nextPage = () => {
+    if (endIndex < tweets.length) setPage(prev => prev + 1);
+  };
+  const prevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
+
   const renderTweet = ({ item }) => (
     <Card style={styles.tweetCard}>
       <View>
@@ -139,22 +148,20 @@ const ViewProfile = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header*/}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSearch} style={styles.headerIcon}>
           <Image source={search} style={styles.imageHeader} />
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleBackHome} style={styles.headerIcon}>
           <Image source={home} style={styles.imageHeader} />
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleLogin} style={styles.headerIcon}>
           <Image source={close} style={styles.imageHeader} />
         </TouchableOpacity>
       </View>
 
-      {/* User profile*/}
+      {/* Profile */}
       <View style={styles.profileHeader}>
         <Avatar.Text
           size={80}
@@ -184,22 +191,48 @@ const ViewProfile = ({ navigation, route }) => {
 
       <Text style={styles.sectionTitle}>Tweets</Text>
 
-      {/* List the tweets */}
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#4CAF50"
-          style={{ marginTop: 40 }}
-        />
+        <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
-        <FlatList
-          data={tweets}
-          keyExtractor={item => item.id}
-          renderItem={renderTweet}
-          ListEmptyComponent={
-            <Text style={styles.noTweets}>There are no tweet yet .</Text>
-          }
-        />
+        <>
+          <FlatList
+            data={paginatedTweets}
+            keyExtractor={item => item.id}
+            renderItem={renderTweet}
+            ListEmptyComponent={
+              <Text style={styles.noTweets}>There are no tweets yet.</Text>
+            }
+          />
+
+          {/* Pagination controls */}
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 15 }}>
+            <TouchableOpacity
+              disabled={page === 1}
+              onPress={prevPage}
+              style={{
+                backgroundColor: page === 1 ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>Previous</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              disabled={endIndex >= tweets.length}
+              onPress={nextPage}
+              style={{
+                backgroundColor: endIndex >= tweets.length ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text style={{ color: '#fff', textAlign: 'center', fontWeight: 'bold' }}>Next</Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
     </View>
   );
