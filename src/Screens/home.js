@@ -8,7 +8,11 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Card, FAB, IconButton  } from 'react-native-paper';
-import { getAllTweets, updateTweetLikes } from '../Config/firebaseServices';
+import { getAllTweets, 
+  updateTweetLikes, 
+  getUserLikedTweets, 
+  addUserLike, 
+  removeUserLike } from '../Config/firebaseServices';
 import styles from '../Styles/styles_home';
 import logo from '../Images/logo.png';
 import home from '../Images/home.png';
@@ -19,56 +23,74 @@ const Home = ({ navigation, route }) => {
   const { profile } = route.params;
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [likedTweets, setLikedTweets] = useState({}); // Guarda qué tweets tiene like
+  const [likedTweets, setLikedTweets] = useState({}); //  save which tweets have like
+
 
   useEffect(() => {
-    const fetchTweets = async () => {
-      setLoading(true);
-      try {
-        const fetchedTweets = await getAllTweets();
-        setTweets(fetchedTweets);
-      } catch (error) {
-        console.error('Error cargando tweets:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchTweets();
-  }, []);
+  const fetchTweets = async () => {
+    setLoading(true);
+    try {
+      const fetchedTweets = await getAllTweets();
+      setTweets(fetchedTweets);
 
-  const handleSearch = () => navigation.navigate('search');
+      // cargar los likes del usuario actual
+      const likedIds = await getUserLikedTweets(profile.username);
+      const likedMap = likedIds.reduce((acc, id) => {
+        acc[id] = true;
+        return acc;
+      }, {});
+      setLikedTweets(likedMap);
+    } catch (error) {
+      console.error('Error loading tweets:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchTweets();
+}, []);
+
+  const handleSearch = () => navigation.navigate('search', { profile });
   const handleProfile = () =>
-    navigation.navigate('view_Profile', { user: profile });
+    navigation.navigate('view_Profile', { profile });
   const handleTweets = () => navigation.navigate('tweets', { profile });
   const handleLogin = () => navigation.navigate('log_in');
   const handleBackHome = () => navigation.navigate('home', { profile });
 
   // Like
   const handleLike = async tweetId => {
-    try {
-      const alreadyLiked = likedTweets[tweetId];
-      const incrementValue = alreadyLiked ? -1 : 1;
+  try {
+    const alreadyLiked = likedTweets[tweetId];
+    const incrementValue = alreadyLiked ? -1 : 1;
 
-      await updateTweetLikes(tweetId, incrementValue);
+    // actualizar contador del tweet
+    await updateTweetLikes(tweetId, incrementValue);
 
-      setLikedTweets(prev => ({
-        ...prev,
-        [tweetId]: !alreadyLiked,
-      }));
-
-      setTweets(prevTweets =>
-        prevTweets.map(tweet =>
-          tweet.id === tweetId
-            ? { ...tweet, likes: tweet.likes + incrementValue }
-            : tweet,
-        ),
-      );
-    } catch (error) {
-      console.error('Error al dar like:', error);
+    // registrar o eliminar el like en la colección tweet_likes
+    if (alreadyLiked) {
+      await removeUserLike(tweetId, profile.username);
+    } else {
+      await addUserLike(tweetId, profile.username);
     }
-  };
 
-  // Formatear fecha/hora
+    // actualizar el estado local
+    setLikedTweets(prev => ({
+      ...prev,
+      [tweetId]: !alreadyLiked,
+    }));
+
+    setTweets(prevTweets =>
+      prevTweets.map(tweet =>
+        tweet.id === tweetId
+          ? { ...tweet, likes: tweet.likes + incrementValue }
+          : tweet
+      )
+    );
+  } catch (error) {
+    console.error('Error liking:', error);
+  }
+};
+
+  // format date and time
   const formatDate = timestamp => {
     if (!timestamp) return '';
     const date = timestamp.toDate();
@@ -82,7 +104,7 @@ const Home = ({ navigation, route }) => {
     return date.toLocaleString('es-CO', options);
   };
 
-  // Renderizar cada tweet
+  // Render tweet
   const renderTweet = ({ item }) => (
     <Card style={styles.tweetCard}>
       <View>
@@ -92,7 +114,7 @@ const Home = ({ navigation, route }) => {
         <Text style={styles.tweetDate}>{formatDate(item.createdAt)}</Text>
         <Text style={styles.tweetText}>{item.content}</Text>
 
-        {/*Like + contador */}
+        {/*Like more counter */}
         <View style={styles.likeContainer}>
           <IconButton
             icon={likedTweets[item.id] ? 'heart' : 'heart-outline'}
@@ -113,7 +135,7 @@ const Home = ({ navigation, route }) => {
         <Image source={logo} style={styles.image} />
       </View>
 
-      {/* Encabezado */}
+      {/* header Menu*/}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleProfile}>
           <Text style={styles.headerUsername}>@{profile.username}</Text>
@@ -132,7 +154,7 @@ const Home = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Lista de tweets */}
+      {/* List the tweets */}
       {loading ? (
         <ActivityIndicator
           size="large"
@@ -145,12 +167,12 @@ const Home = ({ navigation, route }) => {
           keyExtractor={item => item.id}
           renderItem={renderTweet}
           ListEmptyComponent={
-            <Text style={styles.noTweets}>No tweets yet.</Text>
+            <Text style={styles.noTweets}>There are no tweets yet.</Text>
           }
         />
       )}
 
-      {/* Botón flotante */}
+      {/* floating button */}
       <FAB icon="plus" color="#fff" style={styles.fab} onPress={handleTweets} />
     </View>
   );

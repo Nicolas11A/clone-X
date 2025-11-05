@@ -1,17 +1,20 @@
 import { StyleSheet } from 'react-native';
 
-export const styles = StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5', // fondo suave
+    backgroundColor: '#f5f5f5',
+    padding: 20,
   },
-  header: {
+  profileHeader: {
     alignItems: 'center',
-    marginTop: 30,
     marginBottom: 20,
   },
   avatar: {
-    backgroundColor: '#4CAF50', // verde principal
+    backgroundColor: '#4CAF50',
+    color: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   name: {
     fontSize: 22,
@@ -20,66 +23,84 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
   username: {
-    fontSize: 15,
-    color: '#666',
+    fontSize: 16,
+    color: '#4CAF50',
+  },
+  email: {
+    fontSize: 14,
+    color: '#555',
     marginBottom: 10,
   },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    marginHorizontal: 15,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 3,
+  followContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 8,
+    gap: 20,
+  },
+  followText: {
+    color: '#000',
+    fontSize: 15,
+  },
+  followCount: {
+    fontWeight: 'bold',
+    color: '#4CAF50',
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    marginTop: 10,
     marginBottom: 10,
+    color: '#000',
   },
-  field: {
-    fontSize: 15,
-    color: '#444',
+  tweetCard: {
+    backgroundColor: '#fff',
+    padding: 15,
+    marginBottom: 10,
+    borderRadius: 10,
+    elevation: 2,
+  },
+  tweetAuthor: {
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  tweetDate: {
+    color: '#777',
+    fontSize: 12,
     marginBottom: 5,
   },
-  divider: {
+  tweetText: {
+    color: '#333',
+  },
+  likeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  likeCount: {
+    color: '#333',
+    fontWeight: 'bold',
+  },
+  noTweets: {
+    textAlign: 'center',
+    marginTop: 20,
+    color: '#555',
+  },
+  imageHeader: {
+    width: 30,
+    height: 30,
+    alignSelf: 'center',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-around',
+    backgroundColor: '#ffffff',
+    paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
-    marginVertical: 10,
+    borderColor: '#ddd',
   },
-  buttons: {
-    marginHorizontal: 20,
-    marginTop: 15,
-    marginBottom: 40,
-  },
-  button: {
-    backgroundColor: '#4CAF50',
-    borderRadius: 10,
-    paddingVertical: 10,
-    marginBottom: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  buttonBack: {
-    borderColor: '#4CAF50',
-    borderWidth: 2,
-    borderRadius: 10,
-    paddingVertical: 10,
-  },
-  buttonBackText: {
-    color: '#4CAF50',
-    textAlign: 'center',
-    fontWeight: 'bold',
-    fontSize: 16,
+  headerIcon: {
+    paddingHorizontal: 8,
   },
 });
 

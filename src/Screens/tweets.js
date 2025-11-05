@@ -5,18 +5,18 @@ import styles from '../Styles/styles_tweets';
 import { createTweet } from '../Config/firebaseServices';
 
 const Tweets = ({ navigation, route }) => {
-  const { profile } = route.params; // usuario conectado
+  const { profile } = route.params; // User logged in
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handlePublish = async () => {
     if (content.trim() === '') {
-      Alert.alert('Advertencia', 'El tweet no puede estar vacío');
+      Alert.alert('warning', 'the tweet cannot be empty');
       return;
     }
 
     if (content.length > 280) {
-      Alert.alert('Advertencia', 'El tweet no puede exceder los 280 caracteres');
+      Alert.alert('warning', 'The tweet cannot exceed 280 characters');
       return;
     }
 
@@ -31,12 +31,12 @@ const Tweets = ({ navigation, route }) => {
       };
 
       await createTweet(tweetData);
-      Alert.alert('Éxito', 'Tu tweet ha sido publicado');
+      Alert.alert('Success', 'Your tweet has been published');
       setContent('');
       navigation.navigate('home', { profile });
     } catch (error) {
-      console.error('Error publicando tweet:', error);
-      Alert.alert('Error', 'No se pudo publicar el tweet');
+      console.error('Error posting tweet:', error);
+      Alert.alert('error', 'The tweet could not be published');
     } finally {
       setLoading(false);
     }

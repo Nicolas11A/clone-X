@@ -20,17 +20,17 @@ export default function App() {
           <Stack.Screen
             name="log_in"
             component={log_in}
-            options={{ title: 'Iniciar Sesion' }}
+            options={{ title: 'login' }}
           />
           <Stack.Screen
             name="sign_up"
             component={sign_up}
-            options={{ title: 'Crear Perfil' }}
+            options={{ title: 'Create profile' }}
           />
           <Stack.Screen
             name="home"
             component={home}
-            options={{ title: 'Inicio' }}
+            options={{ title: 'Home' }}
           />
           <Stack.Screen
             name="tweets"
@@ -40,17 +40,17 @@ export default function App() {
           <Stack.Screen
             name="search"
             component={search}
-            options={{ title: 'Buscar Usuarios' }}
+            options={{ title: 'search user' }}
           />
           <Stack.Screen
             name="ViewOtherProfile"
             component={ViewOtherProfile}
-            options={{ title: 'Perfil de Otro Usuario' }}
+            options={{ title: 'another users profile' }}
           />
           <Stack.Screen
             name="view_Profile"
             component={view_Profile}
-            options={{ title: 'Perfil de Usuario' }}
+            options={{ title: 'user profile' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

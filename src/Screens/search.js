@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, FlatList, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import { 
+  View, 
+  Text, 
+  TextInput, 
+  FlatList, 
+  TouchableOpacity, 
+  ActivityIndicator 
+} from 'react-native';
 import { Card } from 'react-native-paper';
 import { collection, getDocs, query, where } from 'firebase/firestore';
 import { db } from '../Config/firebase';
 import styles from '../Styles/styles_search'; 
 
-const search = ({ navigation }) => {
+const Search = ({ navigation, route }) => {
+  // usuario actual conectado (pasado desde Home)
+  const { profile } = route.params;
+
   const [searchTerm, setSearchTerm] = useState('');
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Buscar usuarios a medida que el texto cambia
+  // Buscar usuarios mientras se escribe
   useEffect(() => {
     if (searchTerm.trim() === '') {
       setResults([]);
@@ -22,7 +32,7 @@ const search = ({ navigation }) => {
       try {
         const usersRef = collection(db, 'profiles');
 
-        // Buscar por username y por nombre
+        // Buscar por username o por nombre
         const q1 = query(usersRef, where('username', '>=', searchTerm), where('username', '<=', searchTerm + '\uf8ff'));
         const q2 = query(usersRef, where('name', '>=', searchTerm), where('name', '<=', searchTerm + '\uf8ff'));
 
@@ -40,20 +50,25 @@ const search = ({ navigation }) => {
 
         setResults(uniqueUsers);
       } catch (error) {
-        console.error('Error searching users:', error);
+        console.error('Error buscando usuarios:', error);
       } finally {
         setLoading(false);
       }
     };
 
-    const delaySearch = setTimeout(fetchUsers, 400); // Espera breve al escribir
+    const delaySearch = setTimeout(fetchUsers, 400); // pequeño delay
     return () => clearTimeout(delaySearch);
   }, [searchTerm]);
 
+  // Cuando se selecciona un usuario de la lista
   const handleUserPress = (user) => {
-    //ver el perfil del usuario seleccionado
-    navigation.navigate('ViewOtherProfile', { user });
-    Alert.alert('User Selected', `You selected ${user.name} (@${user.username})`);
+    if (user.username === profile.username) {
+      // Si es el mismo usuario logueado → ver su propio perfil
+      navigation.navigate('view_Profile', { profile });
+    } else {
+      // Si es otro usuario → ver el perfil ajeno
+      navigation.navigate('ViewOtherProfile', { profile: user, currentUser: profile });
+    }
   };
 
   const renderUser = ({ item }) => (
@@ -97,4 +112,4 @@ const search = ({ navigation }) => {
   );
 };
 
-export default search;
+export default Search;

@@ -27,26 +27,26 @@ const sign_up = ({ navigation }) => {
 
   const handleSave = async () => {
     if (!formValid) {
-      Alert.alert('Advertencia', 'Todos los campos con * son obligatorios y el correo debe contener "@"');
+      Alert.alert('Warning', 'All fields marked with * are required and the email must contain "@"');
       return;
     }
 
     try {
       const emailExists = await checkEmailExists(email);
       if (emailExists) {
-        Alert.alert('Error', 'Este correo ya está registrado. Intenta con otro.');
+        Alert.alert('Error', 'This email is already registered. Try another one.');
         return;
       }
       const usernameExists = await checkUsernameExists(username);
       if (usernameExists) {
-        Alert.alert('Error', 'Este nombre de usuario ya está en uso. Elige otro.');
+        Alert.alert('Error', 'This username is already taken. Please choose another one.');
         return;
       }
 
       const profileUser = { name, lastName, email, username, password };
       await createProfile(profileUser);
 
-      Alert.alert('Éxito', 'Perfil creado con éxito', [
+      Alert.alert('Success', 'Profile created successfully', [
         {
           text: 'OK',
           onPress: () => {
@@ -56,8 +56,8 @@ const sign_up = ({ navigation }) => {
         },
       ]);
     } catch (error) {
-      console.error('Error creando perfil:', error);
-      Alert.alert('Error', 'No se pudo crear el perfil.');
+      console.error('Error creating profile:', error);
+      Alert.alert('Error', 'Profile could not be created.');
     }
   };
 
@@ -70,7 +70,7 @@ const sign_up = ({ navigation }) => {
       <ScrollView>
         <View>
           <Image source={logo} style={styles.image} />
-          <Text style={styles.title}>Crear Cuenta</Text>
+          <Text style={styles.title}>Create account</Text>
         </View>
 
         <Card style={styles.Card}>
@@ -119,7 +119,7 @@ const sign_up = ({ navigation }) => {
               right={
                 <TextInput.Icon
                   icon={hidePassword ? 'eye-off' : 'eye'}
-                  onPress={() => setHidePassword(!hidePassword)} // 👁 alternar visibilidad
+                  onPress={() => setHidePassword(!hidePassword)}
                 />
               }
               textColor='black'

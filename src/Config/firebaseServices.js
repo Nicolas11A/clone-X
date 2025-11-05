@@ -19,6 +19,7 @@ const COLLECTION_NAME = 'profiles';
 const COLLECTION_NAME2 = 'followers';
 const COLLECTION_NAME3 = 'follows';
 const COLLECTION_NAME4 = 'tweets';
+const COLLECTION_NAME5 = 'tweet_likes';
 
 
 export const createProfile = async (profileData) => {
@@ -44,9 +45,9 @@ export const checkEmailExists = async email => {
       where('email', '==', email),
     );
     const snapshot = await getDocs(q);
-    return !snapshot.empty; // true si ya existe
+    return !snapshot.empty; // true if it exists
   } catch (error) {
-    console.error('Error verificando correo:', error);
+    console.error('Error verifying email:', error);
     throw error;
   }
 };
@@ -58,9 +59,9 @@ export const checkUsernameExists = async username => {
         where('username', '==', username),
     );
     const snapshot = await getDocs(q);
-    return !snapshot.empty; // true si ya existe
+    return !snapshot.empty; // true if it exists
   } catch (error) {
-    console.error('Error verificando nombre de usuario:', error);
+    console.error('Error verifying username:', error);
     throw error;
   }
 };
@@ -74,7 +75,7 @@ export const getProfileByUsername = async username => {
     const snapshot = await getDocs(q);
     return snapshot.empty ? null : snapshot.docs[0].data();
   } catch (error) {
-    console.error('Error obteniendo perfil por nombre de usuario:', error);
+    console.error('Error retrieving profile by username:', error);
     throw error;
   }
 };
@@ -106,7 +107,7 @@ export const getAllTweets = async () => {
     }));
     return tweets;
   } catch (error) {
-    console.error('Error obteniendo tweets:', error);
+    console.error('Error retrieving tweets:', error);
     throw error;
   }
 };
@@ -117,9 +118,163 @@ export const updateTweetLikes = async (tweetId, incrementValue) => {
     await updateDoc(tweetRef, {
       likes: increment(incrementValue),
     });
-    console.log('Likes actualizados');
+    console.log('updated likes');
   } catch (error) {
-    console.error('Error actualizando likes:', error);
+    console.error('Error updating likes:', error);
+    throw error;
+  }
+};
+
+export const hasUserLikedTweet = async (tweetId, username) => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME5),
+      where('tweetId', '==', tweetId),
+      where('username', '==', username)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Error verificando like del usuario:', error);
+    throw error;
+  }
+};
+
+export const addUserLike = async (tweetId, username) => {
+  try {
+    await addDoc(collection(db, COLLECTION_NAME5), {
+      tweetId,
+      username,
+    });
+  } catch (error) {
+    console.error('Error agregando like del usuario:', error);
+    throw error;
+  }
+};
+export const removeUserLike = async (tweetId, username) => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME5),
+      where('tweetId', '==', tweetId),
+      where('username', '==', username)
+    );
+    const snapshot = await getDocs(q);
+    snapshot.forEach(docu => deleteDoc(doc(db, COLLECTION_NAME5, docu.id)));
+  } catch (error) {
+    console.error('Error quitando like del usuario:', error);
+    throw error;
+  }
+};
+export const getUserLikedTweets = async username => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME5),
+      where('username', '==', username)
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.data().tweetId);
+  } catch (error) {
+    console.error('Error obteniendo likes del usuario:', error);
+    throw error;
+  }
+};
+export const getFollowersCount = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME2), where('followingUsername', '==', username));
+    const snapshot = await getDocs(q);
+    return snapshot.size; //number of documents (followers)
+  } catch (error) {
+    console.error('Error obtaining follower count:', error);
+    throw error;
+  }
+};
+
+
+export const getFollowingCount = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME3), where('followerUsername', '==', username));
+    const snapshot = await getDocs(q);
+    return snapshot.size; // number of followed
+  } catch (error) {
+    console.error('Error obtaining number of consecutive:', error);
+    throw error;
+  }
+};
+
+
+export const fetchCounts = async (username) => {
+  try {
+    const [followers, following] = await Promise.all([
+      getFollowersCount(username),
+      getFollowingCount(username),
+    ]);
+
+    return { followers, following };
+  } catch (error) {
+    console.error('Error retrieving trace counters:', error);
+    throw error;
+  }
+};
+
+export const isFollowing = async (followerUsername, followingUsername) => {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME3), // follows
+      where('followerUsername', '==', followerUsername),
+      where('followingUsername', '==', followingUsername)
+    );
+    const snapshot = await getDocs(q);
+    return !snapshot.empty;
+  } catch (error) {
+    console.error('Error verificando si sigue:', error);
+    throw error;
+  }
+};
+
+export const followUser = async (followerUsername, followingUsername) => {
+  try {
+    // add follows
+    await addDoc(collection(db, COLLECTION_NAME3), {
+      followerUsername,
+      followingUsername,
+    });
+
+    // add followers
+    await addDoc(collection(db, COLLECTION_NAME2), {
+      followerUsername,
+      followingUsername,
+    });
+
+    console.log(`${followerUsername} ahora sigue a ${followingUsername}`);
+  } catch (error) {
+    console.error('Error siguiendo usuario:', error);
+    throw error;
+  }
+};
+
+export const unfollowUser = async (followerUsername, followingUsername) => {
+  try {
+    // delete follows
+    const q1 = query(
+      collection(db, COLLECTION_NAME3),
+      where('followerUsername', '==', followerUsername),
+      where('followingUsername', '==', followingUsername)
+    );
+    const snapshot1 = await getDocs(q1);
+    snapshot1.forEach(docu => deleteDoc(doc(db, COLLECTION_NAME3, docu.id)));
+
+    // delete  followers
+    const q2 = query(
+      collection(db, COLLECTION_NAME2),
+      where('followerUsername', '==', followerUsername),
+      where('followingUsername', '==', followingUsername)
+    );
+    const snapshot2 = await getDocs(q2);
+    snapshot2.forEach(docu => deleteDoc(doc(db, COLLECTION_NAME2, docu.id)));
+
+    console.log(`${followerUsername} dejó de seguir a ${followingUsername}`);
+  } catch (error) {
+    console.error('Error al dejar de seguir usuario:', error);
     throw error;
   }
 };

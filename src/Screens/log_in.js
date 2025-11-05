@@ -22,34 +22,34 @@ const log_in = ({ navigation }) => {
 
   const handleLogin = () => {
     if (!formValid) {
-      Alert.alert('Advertencia', 'los campos con * son obligatorios', [
+      Alert.alert('Warning, fields marked with * are required', [
         { text: 'OK' },
       ]);
       return;
     }
-    //comprobar si el email y password coinciden con los del perfil creado
-    //y si es asi, navegar al menu principal
+    //Check if the email and password match those of the created profile.
+    // //If they do, navigate to the main menu.
 
     getProfileByUsername(profileUser.username)
       .then(fetchedProfile => {
         if (!fetchedProfile) {
-          // Caso: el correo no existe en la base de datos
-          Alert.alert('Error', 'El correo o contraseña son incorrectos', [
+          // Case: the email does not exist in the database
+          Alert.alert('Error', 'The email or password is incorrect', [
             { text: 'OK' },
           ]);
           return;
         }
 
         if (fetchedProfile.password === profileUser.password) {
-          //navegar al menu principal
+          //navigate to main menu
           navigation.navigate('home', { profile: fetchedProfile });
         } else {
-          Alert.alert('Error', 'El correo o contraseña son incorrectos', [{ text: 'OK' }]);
+          Alert.alert('Error', 'The email or password is incorrect', [{ text: 'OK' }]);
         }
       })
       .catch(error => {
-        console.error('Error obteniendo perfil:', error);
-        Alert.alert('Error', 'No se pudo iniciar sesión.', [{ text: 'OK' }]);
+        console.error('Error obtaining profile:', error);
+        Alert.alert('Error', 'We were unable to log in.', [{ text: 'OK' }]);
       });
   };
 
@@ -84,7 +84,7 @@ const log_in = ({ navigation }) => {
               right={
                 <TextInput.Icon
                   icon={hidePassword ? 'eye-off' : 'eye'}
-                  onPress={() => setHidePassword(!hidePassword)} // 👁 alternar visibilidad
+                  onPress={() => setHidePassword(!hidePassword)} //  toggle visibility
                 />
               }
               textColor={'black'}
