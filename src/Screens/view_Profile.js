@@ -247,11 +247,7 @@ const ViewProfile = ({ navigation, route }) => {
       <Text style={styles.sectionTitle}>Tweets</Text>
 
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#4CAF50"
-          style={{ marginTop: 40 }}
-        />
+        <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
         <>
           <FlatList

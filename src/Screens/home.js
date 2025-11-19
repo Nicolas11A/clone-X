@@ -220,11 +220,7 @@ const Home = ({ navigation, route }) => {
 
       {/* Tweets */}
       {loading ? (
-        <ActivityIndicator
-          size="large"
-          color="#4CAF50"
-          style={{ marginTop: 40 }}
-        />
+        <ActivityIndicator size="large" color="#4CAF50" style={{ marginTop: 40 }} />
       ) : (
         <>
           <FlatList
