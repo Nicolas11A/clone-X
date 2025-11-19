@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { Avatar, Card, IconButton } from 'react-native-paper';
 import styles from '../Styles/styles_viewProfile';
@@ -16,6 +17,7 @@ import {
   getUserLikedTweets,
   addUserLike,
   removeUserLike,
+  deleteTweet,
 } from '../Config/firebaseServices';
 import home from '../Images/home.png';
 import search from '../Images/search.png';
@@ -28,21 +30,52 @@ const ViewProfile = ({ navigation, route }) => {
   const [followersCount, setFollowersCount] = useState(0);
   const [followingCount, setFollowingCount] = useState(0);
   const [likedTweets, setLikedTweets] = useState({});
+  const [page, setPage] = useState(1);
 
-  const handleFollowers = () => navigation.navigate('followers', { profile });
-  const handleFollows = () => navigation.navigate('follows', { profile });
+  const ITEMS_PER_PAGE = 10;
+
+  const handleFollowers = () =>
+    navigation.navigate('followers', { profile, currentUser: profile });
+  const handleFollows = () =>
+    navigation.navigate('follows', { profile, currentUser: profile });
   const handleSearch = () => navigation.navigate('search', { profile });
   const handleLogin = () => navigation.navigate('log_in');
   const handleBackHome = () => navigation.navigate('home', { profile });
+  const handleDeleteTweet = (tweetId) => {
+  Alert.alert(
+    "Delete Tweet",
+    "Are you sure you want to delete this tweet?",
+    [
+      {
+        text: "Cancel",
+        style: "cancel"
+      },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: async () => {
+          try {
+            await deleteTweet(tweetId);
 
-  // Load the user's tweets and likes.
+            setTweets(prev => prev.filter(t => t.id !== tweetId));
+
+            console.log("Tweet deleted successfully");
+          } catch (error) {
+            console.error("Error deleting tweet:", error);
+          }
+        }
+      }
+    ],
+    { cancelable: true }
+  );
+};
   useEffect(() => {
     const loadProfileData = async () => {
       setLoading(true);
       try {
         const userTweets = await getAllTweets();
         const filteredTweets = userTweets.filter(
-          t => t.username === profile.username
+          t => t.username === profile.username,
         );
         setTweets(filteredTweets);
 
@@ -50,7 +83,6 @@ const ViewProfile = ({ navigation, route }) => {
         setFollowersCount(followers);
         setFollowingCount(following);
 
-        // Get likes from the logged-in user
         const likedIds = await getUserLikedTweets(profile.username);
         const likedMap = likedIds.reduce((acc, id) => {
           acc[id] = true;
@@ -67,23 +99,19 @@ const ViewProfile = ({ navigation, route }) => {
     loadProfileData();
   }, []);
 
-
   const handleLike = async tweetId => {
     try {
       const alreadyLiked = likedTweets[tweetId];
       const incrementValue = alreadyLiked ? -1 : 1;
 
-      // update likes count
       await updateTweetLikes(tweetId, incrementValue);
 
-      // Register or remove like
       if (alreadyLiked) {
         await removeUserLike(tweetId, profile.username);
       } else {
         await addUserLike(tweetId, profile.username);
       }
 
-      // update local state
       setLikedTweets(prev => ({
         ...prev,
         [tweetId]: !alreadyLiked,
@@ -93,15 +121,14 @@ const ViewProfile = ({ navigation, route }) => {
         prevTweets.map(tweet =>
           tweet.id === tweetId
             ? { ...tweet, likes: tweet.likes + incrementValue }
-            : tweet
-        )
+            : tweet,
+        ),
       );
     } catch (error) {
       console.error('Error updating like:', error);
     }
   };
 
-  // date format
   const formatDate = timestamp => {
     if (!timestamp) return '';
     const date = timestamp.toDate();
@@ -114,16 +141,53 @@ const ViewProfile = ({ navigation, route }) => {
     });
   };
 
-  // Render tweet
+  // pagination
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTweets = tweets.slice(startIndex, endIndex);
+
+  const nextPage = () => {
+    if (endIndex < tweets.length) setPage(prev => prev + 1);
+  };
+  const prevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
+
   const renderTweet = ({ item }) => (
     <Card style={styles.tweetCard}>
       <View>
-        <Text style={styles.tweetAuthor}>
-          {item.name} {item.lastName} @{item.username}
-        </Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={styles.tweetAuthor}>
+            {item.name} {item.lastName} @{item.username}
+          </Text>
+
+          {item.username === profile.username && (
+            <IconButton
+              icon="delete"
+              size={20}
+              iconColor="#d32f2f"
+              onPress={() => handleDeleteTweet(item.id)}
+            />
+          )}
+        </View>
         <Text style={styles.tweetDate}>{formatDate(item.createdAt)}</Text>
+
         <Text style={styles.tweetText}>{item.content}</Text>
 
+        {/* show image if exists */}
+        {item.imageUrl && (
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{
+              width: '100%',
+              height: 200,
+              borderRadius: 10,
+              marginTop: 10,
+            }}
+          />
+        )}
+
+        {/* Likes */}
         <View style={styles.likeContainer}>
           <IconButton
             icon={likedTweets[item.id] ? 'heart' : 'heart-outline'}
@@ -139,22 +203,20 @@ const ViewProfile = ({ navigation, route }) => {
 
   return (
     <View style={styles.container}>
-      {/* Header*/}
+      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={handleSearch} style={styles.headerIcon}>
           <Image source={search} style={styles.imageHeader} />
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleBackHome} style={styles.headerIcon}>
           <Image source={home} style={styles.imageHeader} />
         </TouchableOpacity>
-
         <TouchableOpacity onPress={handleLogin} style={styles.headerIcon}>
           <Image source={close} style={styles.imageHeader} />
         </TouchableOpacity>
       </View>
 
-      {/* User profile*/}
+      {/* Profile */}
       <View style={styles.profileHeader}>
         <Avatar.Text
           size={80}
@@ -184,7 +246,6 @@ const ViewProfile = ({ navigation, route }) => {
 
       <Text style={styles.sectionTitle}>Tweets</Text>
 
-      {/* List the tweets */}
       {loading ? (
         <ActivityIndicator
           size="large"
@@ -192,14 +253,67 @@ const ViewProfile = ({ navigation, route }) => {
           style={{ marginTop: 40 }}
         />
       ) : (
-        <FlatList
-          data={tweets}
-          keyExtractor={item => item.id}
-          renderItem={renderTweet}
-          ListEmptyComponent={
-            <Text style={styles.noTweets}>There are no tweet yet .</Text>
-          }
-        />
+        <>
+          <FlatList
+            data={paginatedTweets}
+            keyExtractor={item => item.id}
+            renderItem={renderTweet}
+            ListEmptyComponent={
+              <Text style={styles.noTweets}>There are no tweets yet.</Text>
+            }
+          />
+
+          {/* Pagination controls */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 15,
+            }}
+          >
+            <TouchableOpacity
+              disabled={page === 1}
+              onPress={prevPage}
+              style={{
+                backgroundColor: page === 1 ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text
+                style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                Previous
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              disabled={endIndex >= tweets.length}
+              onPress={nextPage}
+              style={{
+                backgroundColor: endIndex >= tweets.length ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text
+                style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                Next
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
     </View>
   );

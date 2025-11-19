@@ -51,6 +51,23 @@ const styles = StyleSheet.create({
     color: '#4CAF50',
     fontWeight: 'bold',
   },
+  
+  imageButton: {
+    backgroundColor: '#e8f5e9',
+    borderWidth: 1,
+    borderColor: '#4CAF50',
+    padding: 10,
+    borderRadius: 10,
+    marginTop: 10,
+    marginBottom: 10,
+    alignItems: 'center',
+  },
+
+  imageButtonText: {
+    color: '#4CAF50',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
 });
 
 export default styles;

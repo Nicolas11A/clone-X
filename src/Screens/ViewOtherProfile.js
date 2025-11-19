@@ -25,9 +25,7 @@ import search from '../Images/search.png';
 import close from '../Images/close.png';
 
 const ViewOtherProfile = ({ navigation, route }) => {
-  const { profile, currentUser } = route.params; 
- // profile: user you are viewing 
- //currentUser: logged-in user
+  const { profile, currentUser } = route.params;
   const [tweets, setTweets] = useState([]);
   const [loading, setLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -35,33 +33,41 @@ const ViewOtherProfile = ({ navigation, route }) => {
   const [likedTweets, setLikedTweets] = useState({});
   const [isUserFollowing, setIsUserFollowing] = useState(false);
 
-  const handleSearch = () => navigation.navigate('search', {profile: currentUser });
-  const handleLogin = () => navigation.navigate('log_in');
-  const handleBackHome = () => navigation.navigate('home', { profile: currentUser });
+  // pagination
+  const [page, setPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
-  // Load profile information
+  const handleSearch = () =>
+    navigation.navigate('search', { profile: currentUser });
+  const handleLogin = () => navigation.navigate('log_in');
+  const handleBackHome = () =>
+    navigation.navigate('home', { profile: currentUser });
+  const handleFollowers = () =>
+    navigation.navigate('followers', { profile, currentUser });
+  const handleFollows = () =>
+    navigation.navigate('follows', { profile, currentUser });
+
+  // Load profile data
   useEffect(() => {
     const loadProfileData = async () => {
       setLoading(true);
       try {
-      
-        //tweets of the user you are viewing
         const userTweets = await getAllTweets();
         const filteredTweets = userTweets.filter(
-          t => t.username === profile.username
+          t => t.username === profile.username,
         );
         setTweets(filteredTweets);
 
-        // followers/following counters
         const { followers, following } = await fetchCounts(profile.username);
         setFollowersCount(followers);
         setFollowingCount(following);
 
-        // check if the current user is already following
-        const followingStatus = await isFollowing(currentUser.username, profile.username);
+        const followingStatus = await isFollowing(
+          currentUser.username,
+          profile.username,
+        );
         setIsUserFollowing(followingStatus);
 
-        // get likes of the current user
         const likedIds = await getUserLikedTweets(currentUser.username);
         const likedMap = likedIds.reduce((acc, id) => {
           acc[id] = true;
@@ -78,7 +84,7 @@ const ViewOtherProfile = ({ navigation, route }) => {
     loadProfileData();
   }, []);
 
-  // Like / Unlike tweet
+  // Like / Unlike
   const handleLike = async tweetId => {
     try {
       const alreadyLiked = likedTweets[tweetId];
@@ -101,8 +107,8 @@ const ViewOtherProfile = ({ navigation, route }) => {
         prevTweets.map(tweet =>
           tweet.id === tweetId
             ? { ...tweet, likes: tweet.likes + incrementValue }
-            : tweet
-        )
+            : tweet,
+        ),
       );
     } catch (error) {
       console.error('Error liking tweet:', error);
@@ -121,7 +127,7 @@ const ViewOtherProfile = ({ navigation, route }) => {
       }
       setIsUserFollowing(!isUserFollowing);
     } catch (error) {
-      console.error('error while following:', error);
+      console.error('Error following/unfollowing:', error);
     }
   };
 
@@ -137,15 +143,44 @@ const ViewOtherProfile = ({ navigation, route }) => {
     });
   };
 
+  // Pagination logic
+  const startIndex = (page - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTweets = tweets.slice(startIndex, endIndex);
+
+  const nextPage = () => {
+    if (endIndex < tweets.length) setPage(prev => prev + 1);
+  };
+
+  const prevPage = () => {
+    if (page > 1) setPage(prev => prev - 1);
+  };
+
   const renderTweet = ({ item }) => (
     <Card style={styles.tweetCard}>
       <View>
         <Text style={styles.tweetAuthor}>
           {item.name} {item.lastName} @{item.username}
         </Text>
+
         <Text style={styles.tweetDate}>{formatDate(item.createdAt)}</Text>
+
         <Text style={styles.tweetText}>{item.content}</Text>
 
+        {/* Show image if exists */}
+        {item.imageUrl && (
+          <Image
+            source={{ uri: item.imageUrl }}
+            style={{
+              width: '100%',
+              height: 200,
+              borderRadius: 10,
+              marginTop: 10,
+            }}
+          />
+        )}
+
+        {/* Likes */}
         <View style={styles.likeContainer}>
           <IconButton
             icon={likedTweets[item.id] ? 'heart' : 'heart-outline'}
@@ -174,7 +209,7 @@ const ViewOtherProfile = ({ navigation, route }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Profile */}
+      {/* Profile information */}
       <View style={styles.profileHeader}>
         <Avatar.Text
           size={80}
@@ -188,7 +223,7 @@ const ViewOtherProfile = ({ navigation, route }) => {
         <Text style={styles.username}>@{profile.username}</Text>
         <Text style={styles.email}>{profile.email}</Text>
 
-        {/* Follow / Unfollow */}
+        {/*  Follow / Unfollow */}
         <Button
           mode={isUserFollowing ? 'contained-tonal' : 'contained'}
           onPress={handleFollowToggle}
@@ -196,23 +231,29 @@ const ViewOtherProfile = ({ navigation, route }) => {
             backgroundColor: isUserFollowing ? '#ccc' : '#4CAF50',
             marginTop: 10,
           }}
+          textColor="#fff"
         >
           {isUserFollowing ? 'Unfollow' : 'Follow'}
         </Button>
 
-        {/* Seguidores */}
+        {/* Followers / Follows */}
         <View style={styles.followContainer}>
-          <Text style={styles.followText}>
-            <Text style={styles.followCount}>{followingCount}</Text> following
-          </Text>
-          <Text style={styles.followText}>
-            <Text style={styles.followCount}>{followersCount}</Text> followers
-          </Text>
+          <TouchableOpacity onPress={handleFollows}>
+            <Text style={styles.followText}>
+              <Text style={styles.followCount}>{followingCount}</Text> following
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleFollowers}>
+            <Text style={styles.followText}>
+              <Text style={styles.followCount}>{followersCount}</Text> followers
+            </Text>
+          </TouchableOpacity>
         </View>
       </View>
 
       <Text style={styles.sectionTitle}>Tweets</Text>
 
+      {/* List of tweets with pagination */}
       {loading ? (
         <ActivityIndicator
           size="large"
@@ -220,14 +261,67 @@ const ViewOtherProfile = ({ navigation, route }) => {
           style={{ marginTop: 40 }}
         />
       ) : (
-        <FlatList
-          data={tweets}
-          keyExtractor={item => item.id}
-          renderItem={renderTweet}
-          ListEmptyComponent={
-            <Text style={styles.noTweets}>There are no tweets yet.</Text>
-          }
-        />
+        <>
+          <FlatList
+            data={paginatedTweets}
+            keyExtractor={item => item.id}
+            renderItem={renderTweet}
+            ListEmptyComponent={
+              <Text style={styles.noTweets}>There are no tweets yet.</Text>
+            }
+          />
+
+          {/* Pagination controls */}
+          <View
+            style={{
+              flexDirection: 'row',
+              justifyContent: 'space-between',
+              marginTop: 15,
+            }}
+          >
+            <TouchableOpacity
+              disabled={page === 1}
+              onPress={prevPage}
+              style={{
+                backgroundColor: page === 1 ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text
+                style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                Previous
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              disabled={endIndex >= tweets.length}
+              onPress={nextPage}
+              style={{
+                backgroundColor: endIndex >= tweets.length ? '#ccc' : '#4CAF50',
+                padding: 10,
+                borderRadius: 8,
+                flex: 0.45,
+              }}
+            >
+              <Text
+                style={{
+                  color: '#fff',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                }}
+              >
+                Next
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </>
       )}
     </View>
   );

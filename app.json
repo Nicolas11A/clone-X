@@ -1,4 +1,7 @@
 {
   "name": "Clone_X",
-  "displayName": "Clone_X"
+  "displayName": "Clone_X",
+  "plugins": [
+    "expo-web-browser"
+  ]
 }

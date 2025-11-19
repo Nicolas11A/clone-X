@@ -1,4 +1,3 @@
-import { server } from 'typescript';
 import { db } from './firebase';
 import {
   collection,
@@ -14,12 +13,16 @@ import {
   updateDoc,
   increment,
 } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
+import { uploadTweetImage } from './firebaseStorage';
+
+
 
 const COLLECTION_NAME = 'profiles';
 const COLLECTION_NAME2 = 'followers';
 const COLLECTION_NAME3 = 'follows';
 const COLLECTION_NAME4 = 'tweets';
-const COLLECTION_NAME5 = 'tweet_likes';
+const COLLECTION_NAME5 = 'tweets_likes';
 
 
 export const createProfile = async (profileData) => {
@@ -86,13 +89,15 @@ export const createTweet = async tweetData => {
       name: tweetData.name,
       lastName: tweetData.lastName,
       username: tweetData.username,
-      content: tweetData.content,
+      content: tweetData.content.trim(),
+      imageUrl: tweetData.imageUrl || null,  // ← ahora guardamos la ruta
       likes: 0,
-      createdAt: serverTimestamp(),
+      createdAt: Timestamp.now(),
     });
-    console.log('Document written with ID: ', docRef.id);
+    console.log("Tweet creado:", docRef.id);
+    return docRef.id;
   } catch (error) {
-    console.error('Error adding document: ', error);
+    console.error("Error adding tweet:", error);
     throw error;
   }
 };
@@ -135,7 +140,7 @@ export const hasUserLikedTweet = async (tweetId, username) => {
     const snapshot = await getDocs(q);
     return !snapshot.empty;
   } catch (error) {
-    console.error('Error verificando like del usuario:', error);
+    console.error('Error checking user like:', error);
     throw error;
   }
 };
@@ -147,7 +152,7 @@ export const addUserLike = async (tweetId, username) => {
       username,
     });
   } catch (error) {
-    console.error('Error agregando like del usuario:', error);
+    console.error('Error adding user like:', error);
     throw error;
   }
 };
@@ -161,7 +166,7 @@ export const removeUserLike = async (tweetId, username) => {
     const snapshot = await getDocs(q);
     snapshot.forEach(docu => deleteDoc(doc(db, COLLECTION_NAME5, docu.id)));
   } catch (error) {
-    console.error('Error quitando like del usuario:', error);
+    console.error('Error removing user like:', error);
     throw error;
   }
 };
@@ -174,7 +179,7 @@ export const getUserLikedTweets = async username => {
     const snapshot = await getDocs(q);
     return snapshot.docs.map(doc => doc.data().tweetId);
   } catch (error) {
-    console.error('Error obteniendo likes del usuario:', error);
+    console.error('Error obtaining user likes:', error);
     throw error;
   }
 };
@@ -226,7 +231,7 @@ export const isFollowing = async (followerUsername, followingUsername) => {
     const snapshot = await getDocs(q);
     return !snapshot.empty;
   } catch (error) {
-    console.error('Error verificando si sigue:', error);
+    console.error('Error checking if following:', error);
     throw error;
   }
 };
@@ -245,9 +250,9 @@ export const followUser = async (followerUsername, followingUsername) => {
       followingUsername,
     });
 
-    console.log(`${followerUsername} ahora sigue a ${followingUsername}`);
+    console.log(`${followerUsername} now follows ${followingUsername}`);
   } catch (error) {
-    console.error('Error siguiendo usuario:', error);
+    console.error('Error following user:', error);
     throw error;
   }
 };
@@ -272,9 +277,46 @@ export const unfollowUser = async (followerUsername, followingUsername) => {
     const snapshot2 = await getDocs(q2);
     snapshot2.forEach(docu => deleteDoc(doc(db, COLLECTION_NAME2, docu.id)));
 
-    console.log(`${followerUsername} dejó de seguir a ${followingUsername}`);
+    console.log(`${followerUsername} unfollowed ${followingUsername}`);
   } catch (error) {
-    console.error('Error al dejar de seguir usuario:', error);
+    console.error('Error unfollowing user:', error);
+    throw error;
+  }
+};
+export const getFollowersList = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME2), where('followingUsername', '==', username));
+    const snapshot = await getDocs(q);
+    const followers = snapshot.docs.map(doc => doc.data().followerUsername);
+    return followers;
+  } catch (error) {
+    console.error('Error obtaining followers list:', error);
+    throw error;
+  }
+};
+
+export const getFollowingList = async (username) => {
+  try {
+    const q = query(collection(db, COLLECTION_NAME3), where('followerUsername', '==', username));
+    const snapshot = await getDocs(q);
+    const following = snapshot.docs.map(doc => doc.data().followingUsername);
+    return following;
+  } catch (error) {
+    console.error('Error obtaining following list:', error);
+    throw error;
+  }
+};
+
+export { uploadTweetImage};
+
+export const deleteTweet = async (tweetId) => {
+  try {
+    const tweetRef = doc(db, COLLECTION_NAME4, tweetId);
+    await deleteDoc(tweetRef);
+
+    console.log("Tweet deleted:", tweetId);
+  } catch (error) {
+    console.error("Error deleting tweet:", error);
     throw error;
   }
 };

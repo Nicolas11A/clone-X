@@ -9,6 +9,8 @@ import view_Profile from './src/Screens/view_Profile';
 import home from './src/Screens/home';
 import tweets from './src/Screens/tweets';
 import ViewOtherProfile from './src/Screens/ViewOtherProfile';
+import followers from './src/Screens/followers';
+import follows from './src/Screens/follows';
 
 const Stack = createNativeStackNavigator();
 
@@ -51,6 +53,16 @@ export default function App() {
             name="view_Profile"
             component={view_Profile}
             options={{ title: 'user profile' }}
+          />
+          <Stack.Screen
+            name="followers"
+            component={followers}
+            options={{ title: 'Followers' }}
+          />
+          <Stack.Screen
+            name="follows"
+            component={follows}
+            options={{ title: 'Follows' }}
           />
         </Stack.Navigator>
       </NavigationContainer>

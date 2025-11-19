@@ -1,4 +1,4 @@
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, Image, ScrollView, Alert } from 'react-native';
 import { Card, Avatar, TextInput, Button } from 'react-native-paper';
 import styles from '../Styles/styles_login';
@@ -22,34 +22,26 @@ const log_in = ({ navigation }) => {
 
   const handleLogin = () => {
     if (!formValid) {
-      Alert.alert('Warning, fields marked with * are required', [
-        { text: 'OK' },
-      ]);
+      Alert.alert('Warning', 'Fields marked with * are required');
       return;
     }
-    //Check if the email and password match those of the created profile.
-    // //If they do, navigate to the main menu.
 
     getProfileByUsername(profileUser.username)
       .then(fetchedProfile => {
         if (!fetchedProfile) {
-          // Case: the email does not exist in the database
-          Alert.alert('Error', 'The email or password is incorrect', [
-            { text: 'OK' },
-          ]);
+          Alert.alert('Error', 'The username or password is incorrect');
           return;
         }
 
         if (fetchedProfile.password === profileUser.password) {
-          //navigate to main menu
           navigation.navigate('home', { profile: fetchedProfile });
         } else {
-          Alert.alert('Error', 'The email or password is incorrect', [{ text: 'OK' }]);
+          Alert.alert('Error', 'The username or password is incorrect');
         }
       })
       .catch(error => {
         console.error('Error obtaining profile:', error);
-        Alert.alert('Error', 'We were unable to log in.', [{ text: 'OK' }]);
+        Alert.alert('Error', 'We were unable to log in.');
       });
   };
 
@@ -84,25 +76,17 @@ const log_in = ({ navigation }) => {
               right={
                 <TextInput.Icon
                   icon={hidePassword ? 'eye-off' : 'eye'}
-                  onPress={() => setHidePassword(!hidePassword)} //  toggle visibility
+                  onPress={() => setHidePassword(!hidePassword)}
                 />
               }
               textColor={'black'}
             />
-            <Button
-              mode="contained"
-              onPress={handleLogin}
-              style={styles.button_}
-            >
+            <Button mode="contained" onPress={handleLogin} style={styles.button_}>
               <Text style={{ color: '#ffffff', fontWeight: 'bold' }}>
                 Log In
               </Text>
             </Button>
-            <Button
-              mode="text"
-              onPress={handleSignUpNavigation}
-              style={styles.buttonSignUp}
-            >
+            <Button mode="text" onPress={handleSignUpNavigation} style={styles.buttonSignUp}>
               <Text style={styles.buttonTextSignUp}>
                 Don't have an account? Sign Up
               </Text>
@@ -113,4 +97,5 @@ const log_in = ({ navigation }) => {
     </View>
   );
 };
+
 export default log_in;
